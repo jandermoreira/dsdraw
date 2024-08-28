@@ -26,4 +26,5 @@
 *.synctex.gz
 *.tmp
 
-out
+out/
+.idea
