@@ -1,0 +1,92 @@
+%! Package = dsdraw-base
+%! Author = Jander Moreira
+%! Date = 09/2024
+
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{dsdraw-base}[2024/09/07 v0.1 Base functions for dsdraw.]
+
+\ExplSyntaxOn
+
+% ds@IsValidOption: checks if an option is valid and provides true and
+% false brances
+% #1: text (accepted in the form @optionname=value)
+% #2: comma-separated list of accepted options
+% #3: code to execute if option is valid and in the list
+% #4: code to execute if test fails
+%
+% \ds@OptionName is set, removing @ and -, replacing ( for L and ) for R
+% \ds@OptionName is set to anything after = (including empty)
+\cs_generate_variant:Nn \tl_set:Nn { Ne }
+\cs_new:Npn \is_valid_option:nnTF #1#2#3#4 {
+    \tl_set:Ne \l_cell_value_tl { \tl_to_str:n { #1 } }
+    \tl_set:Ne \l_first_token_tl { \tl_item:Nn \l_cell_value_tl { 1 } }
+    \exp_args:No \str_if_eq:nnTF { \l_first_token_tl } { @ } {
+        \regex_match:nnTF { \s*@[^=;\s]+\s*[=;]\s*.* } { \tl_to_str:n { #1 } } {
+            \seq_clear_new:N \l_match_result_seq
+            \seq_set_split:Nnn \l_match_result_seq { = } { #1 }
+            \tl_set:Nf \ds@OptionName { \seq_item:Nn \l_match_result_seq { 1 } }
+            \regex_replace_all:nnN { ; } { } \ds@OptionName
+            \regex_replace_all:nnN { @ } {  } \ds@OptionName
+            \tl_set:Nf \ds@OptionValue { \seq_item:Nn \l_match_result_seq { 2 } }
+        %! parser = off
+            \clist_if_in:noTF { #2 } { \ds@OptionName } {
+                \regex_replace_all:nnN { - } { } \ds@OptionName
+                \regex_replace_all:nnN { \( } { L } \ds@OptionName
+                \regex_replace_all:nnN { \) } { R } \ds@OptionName
+                #3
+            } { #4 }
+            %! parser = on
+        } { #4 }
+    } { #4 }
+}
+\NewDocumentCommand{\ds@IsValidOption}{ >{ \TrimSpaces } m m +m +m}{
+    \exp_args:No \is_valid_option:nnTF { #1 }{ #2 }{ #3 }{ #4 }
+}
+
+
+% ds@IterateList: iterate over a comma-separated list
+% #1: macro name to store current item
+% #2: comma separated list
+% #3: code to run for each item in the list
+\cs_generate_variant:Nn \exp_args:Nn { No }
+\cs_new:Npn \do_iterate_list:nnn #1#2#3 {
+    \tl_if_empty:nTF { #2 } {} {
+        \seq_clear_new:N \l_items_seq
+        \exp_args:NNno\seq_set_split:Nnn \l_items_seq { , } { #2 }
+        \seq_map_inline:Nn \l_items_seq {
+            \tl_set:Nn #1 { ##1 }
+            #3
+        }
+    }
+}
+\NewDocumentCommand{\ds@IterateList}{ m >{ \TrimSpaces } m +m}{
+    \exp_args:Nno \do_iterate_list:nnn { #1 } { #2 } { #3 }
+}
+
+
+% ds@IterateFor: for i = first to last
+% #1: macro name to store current value
+% #2: first value (integer)
+% #3: last value (integer)
+% #4: code to run for each iterator value
+\cs_generate_variant:Nn \exp_args:Nn { No }
+\cs_new:Npn \do_iterate_for:nnnn #1#2#3#4 {
+    \int_zero_new:N \l_local_iterator_int
+    \int_set:Nn \l_local_iterator_int { #2 }
+    \exp_args:No \int_while_do:nn { \l_local_iterator_int <= #3 }{
+        \exp_args:NNe \tl_set:Nn #1 { \int_use:N \l_local_iterator_int }
+        \int_add:Nn \l_local_iterator_int { 1 }
+        #4
+    }
+}
+\NewDocumentCommand{\ds@IterateFor}{ m m m +m}{
+    \do_iterate_for:nnnn { #1 } { #2 } { #3 } { #4 }
+}
+
+
+\ExplSyntaxOff
+
+\NewDocumentCommand{\ds@RunSpecial}{ m m }{%
+    \csuse{ds@#1@#2}%
+}
+
