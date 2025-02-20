@@ -154,9 +154,9 @@
 %% Code
 
 
-\NewDocumentCommand{\ds@RunSpecial}{ m m }{
-    \csuse{ds@#1@#2}
-}
+%\NewDocumentCommand{\ds@RunSpecial}{ m m }{
+%    \csuse{ds@#1@#2}
+%}
 
 \NewDocumentCommand{\ds@array@gap}{ m }{
     \node[array element, minimum width = 1pt, minimum height = 1pt] {#1};
@@ -228,7 +228,7 @@
             \ds@IsValidOption{\ds@local@Item}{
                 gap-to, gap-to(, gap-to), gap-to()
             }{
-                \ds@RunSpecial{array}{\ds@OptionName}
+                %\ds@RunSpecial{array}{\ds@OptionName}
             }{
                 \node[draw, array element] (\ds@ArrayName-\ds@local@Index) {};
                 \node at (\ds@ArrayName-\ds@local@Index) {\ds@local@Item\strut};
