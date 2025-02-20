@@ -7,11 +7,7 @@
 
 \RequirePackage{dsdraw-base}
 
-\RequirePackage{tikz}
 \usetikzlibrary{calc, chains, arrows, positioning}
-\RequirePackage{pgfkeys}
-\RequirePackage{etoolbox}
-
 
 %% Options
 \pgfkeys{
@@ -28,7 +24,7 @@
     direction/right/.code = {
         \tikzset{
             ds@direction/.style = {chain default direction = going right},
-            every join/.append style = {link style, hlink},
+            ds@join/.style = {link style, hlink},
         }
         \csdef{ds@Dots}{$\cdot\cdot\cdot$}
         \csdef{ds@Frame}{
@@ -38,7 +34,7 @@
     direction/left/.code = {
         \tikzset{
             ds@direction/.style = {chain default direction = going left},
-            every join/.append style = {link style, hlink},
+            ds@join/.style = {link style, hlink},
         }
         \csdef{ds@Dots}{$\cdot\cdot\cdot$}
         \csdef{ds@Frame}{
@@ -48,7 +44,7 @@
     direction/up/.code = {
         \tikzset{
             ds@direction/.style = {chain default direction = going above},
-            every join/.append style = {link style, vlink},
+            ds@join/.style = {link style, vlink},
         }
         \csdef{ds@Dots}{\rotatebox{90}{$\cdot\cdot\cdot$}}
         \csdef{ds@Frame}{
@@ -58,7 +54,7 @@
     direction/down/.code = {
         \tikzset{
             ds@direction/.style = {chain default direction = going below},
-            every join/.append style = {link style, vlink},
+            ds@join/.style = {link style, vlink},
         }
         \csdef{ds@Dots}{\rotatebox{90}{$\cdot\cdot\cdot$}}
         \csdef{ds@Frame}{
@@ -74,28 +70,28 @@
         \tikzset{
             ds@style/.append style = {continue chain = going below},
             ds@NodeStyle/.style = {on chain = going below},
-            every join/.append style = {link style, vlink},
+            ds@join/.style = {link style, vlink},
         }%
     },
     going up/.code = {%
         \tikzset{
             ds@style/.append style = {continue chain = going above},
             ds@NodeStyle/.style = {on chain = going above},
-            every join/.append style = {link style, vlink},
+            ds@join/.style = {link style, vlink},
         }%
     },
     going right/.code = {%
         \tikzset{
             ds@style/.append style = {continue chain = going right},
             ds@NodeStyle/.style = {on chain = going right},
-            every join/.append style = {link style, hlink},
+            ds@join/.style = {link style, hlink},
         }%
     },
     going left/.code = {%
         \tikzset{
             ds@style/.append style = {continue chain = going left},
             ds@NodeStyle/.style = {on chain = going left},
-            every join/.append style = {link style, hlink},
+            ds@join/.style = {link style, hlink},
         }%
     },
     not linked/.code = {\DSListSet{linked = false}},
@@ -111,6 +107,8 @@
     right/.code = {
         \tikzset{ds@deviate/.style = {xshift = 2 * \ds@ListNodeDistance}}
     },
+%
+    link style/.code = {\tikzset{link style/.style = {#1}}},
 }
 
 %% Defaults
@@ -130,6 +128,7 @@
     values = {},
     length = 0,
     linked,
+    link style = {-latex, thick},
 }
 
 %% Styles
@@ -143,9 +142,8 @@
     },
     ds@style/.style = {},
     join list/.code = {%
-        \ifbool{ds@list@Link}{\pgfkeysalso{join}}{}%
+        \ifbool{ds@list@Link}{\pgfkeysalso{join = by ds@join}}{}%
     },
-    link style/.style = {-latex, thick},
     vlink/.style = {
         to path = {|- ($(\tikztotarget)!0.55!(\tikztostart)$) -| (\tikztotarget)
         },
@@ -181,27 +179,26 @@
     }%
     \begin{scope}[
         ds@direction,
-        link style,
         node distance = \ds@ListNodeDistance,
         #1,
         start chain = \ds@ListName,
     ]
         \csdef{ds@local@NodeNumber}{0}
-        %\begingroup
         \ds@IterateList{\ds@local@Content}{\ds@ListValues}{
             \tikzset{
                 ds@NodeStyle/.style = {on chain},
                 ds@deviate/.style = {},
             }
+            \begingroup
             \expandafter\ds@GetOption\expandafter{\ds@local@Content}
             \DSListSet{/utils/exec = \pgfkeysalsofrom{\ds@local@Options}}
             \node[list node, ds@NodeStyle, ds@deviate, join list] {};  % in chain
             \node[draw, list node, ds@style] at (\ds@ListName-\tikzchaincount)(\ds@ListName-\ds@local@NodeNumber) {}; % frame
             \node at (\ds@ListName-\ds@local@NodeNumber) {\ds@local@Value\strut}; % value
+            \endgroup
             \pgfmathsetmacro{\ds@local@NodeNumber}{int(\ds@local@NodeNumber + 1)}
             \tikzset{ds@style/.style = {}} % reset
         }
-        %\endgroup
         \whileboolexpr{ test {\ifnumless{\ds@local@NodeNumber}{\ds@ListLength}} }{
             \node[list node, on chain, join list] {};  % in chain
             \node[draw, list node] at (\ds@ListName-\tikzchaincount)(\ds@ListName-\ds@local@NodeNumber) {}; % frame
